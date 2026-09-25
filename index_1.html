@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redress patterns workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ground:#EEF0F6; --surface:#FFFFFF; --head:#E2E6F1; --ink:#182038; --muted:#56607E; --line:#CDD3E4;
+  --primary:#2340C8; --on-primary:#FFFFFF; --mark:#FFD84D; --on-mark:#3A2E00;
+  --code-bg:#F6F7FB; --code-ink:#1D2540; --code-comment:#6B7594;
+  --warn-bg:#FFF4D6; --warn-line:#E5B93C; --ok:#1F7A55;
+  --f-head:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#11152A; --surface:#1A2040; --head:#232A4D; --ink:#E7EAF7; --muted:#9BA5C7; --line:#333B63;
+    --primary:#8FA2FF; --on-primary:#0E1330; --mark:#FFD84D; --on-mark:#2A2100;
+    --code-bg:#0E1226; --code-ink:#DCE1F5; --code-comment:#7F8AB0;
+    --warn-bg:#3A3110; --warn-line:#8A7220; --ok:#5FD3A0;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11152A; --surface:#1A2040; --head:#232A4D; --ink:#E7EAF7; --muted:#9BA5C7; --line:#333B63;
+  --primary:#8FA2FF; --on-primary:#0E1330; --mark:#FFD84D; --on-mark:#2A2100;
+  --code-bg:#0E1226; --code-ink:#DCE1F5; --code-comment:#7F8AB0;
+  --warn-bg:#3A3110; --warn-line:#8A7220; --ok:#5FD3A0;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 16px/1.55 var(--f-body);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--f-head);line-height:1.15;margin:0;letter-spacing:-.01em}
+h1{font-size:1.35rem;font-weight:700}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:.5rem}
+h3{font-size:1.1rem;font-weight:600;margin:1.6rem 0 .4rem}
+p{margin:.5rem 0;max-width:68ch}
+a{color:var(--primary)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding:14px 16px 10px;max-width:960px;margin:0 auto}
+.top p{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:7px 12px;font-size:.9rem;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;padding:0 12px;background:var(--head);border-bottom:1px solid var(--line);scrollbar-width:thin}
+.tab{flex:0 0 auto;border:1px solid var(--line);border-top:0;background:var(--ground);padding:7px 12px 8px;border-radius:0 0 8px 8px;font-size:.92rem;color:var(--muted);white-space:nowrap}
+.tab .n{font-family:var(--f-mono);font-size:.78rem;margin-right:4px}
+.tab[aria-current="true"]{background:var(--mark);color:var(--on-mark);border-color:var(--mark);font-weight:600}
+main{max-width:960px;margin:0 auto;padding:22px 16px 56px}
+.lead{font-size:1.08rem;color:var(--ink)}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.btn{display:inline-block;border:1px solid var(--primary);background:var(--primary);color:var(--on-primary);padding:9px 16px;border-radius:6px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--primary)}
+.btn.tiny{padding:4px 10px;font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}
+.note{border-left:4px solid var(--warn-line);background:var(--warn-bg);padding:10px 14px;border-radius:0 6px 6px 0;margin:14px 0;font-size:.95rem}
+.note button{margin-left:6px}
+.grid{display:grid;gap:12px 16px;grid-template-columns:1fr}
+@media(min-width:680px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:1fr 1fr 1fr}}
+label.f{display:block;font-weight:600;font-size:.92rem}
+label.f .hint{display:block;font-weight:400;color:var(--muted);font-size:.84rem;margin-top:1px}
+input[type=text],input[type=number],input[type=month],select,textarea{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:400 .95rem var(--f-body)}
+textarea{min-height:76px;resize:vertical;font-family:var(--f-mono);font-size:.85rem;line-height:1.45}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.95rem;margin:6px 0}
+.chk input{margin-top:5px}
+.item{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:10px 0;background:var(--surface)}
+.item .ctl{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.rxprev{font-family:var(--f-mono);font-size:.76rem;color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
+.bandrow{display:grid;grid-template-columns:1fr 84px 84px auto;gap:8px;align-items:end;margin:8px 0}
+@media(max-width:520px){.bandrow{grid-template-columns:1fr 1fr;}.bandrow .lab{grid-column:1/-1}}
+table{border-collapse:collapse;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{background:var(--head)}
+.scroll{overflow-x:auto;max-width:100%}
+.cell{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:18px 0;overflow:hidden}
+.cell-head{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--head);border-bottom:1px solid var(--line)}
+.namebox{font:600 .78rem var(--f-mono);border:1px solid var(--line);background:var(--surface);padding:3px 9px;border-radius:3px;white-space:nowrap}
+.fx{font:italic 600 .95rem Georgia,serif;color:var(--primary)}
+.cell-title{flex:1;min-width:0;font-weight:600;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell-meta{padding:8px 12px;font-size:.88rem;color:var(--muted);border-bottom:1px solid var(--line)}
+pre.code{margin:0;padding:12px;overflow:auto;max-height:440px;background:var(--code-bg);color:var(--code-ink);font:400 12.5px/1.5 var(--f-mono);white-space:pre;tab-size:4}
+pre.code .c{color:var(--code-comment)}
+.cell.skip{padding:10px 14px;border-style:dashed}
+.cell.skip .cell-title{white-space:normal}
+details{margin:10px 0}
+summary{cursor:pointer;font-weight:600}
+details>*:not(summary){margin-top:8px}
+ul.tight{margin:.4rem 0;padding-left:1.2rem}
+ul.tight li{margin:.25rem 0;max-width:68ch}
+.pager{display:flex;justify-content:space-between;gap:10px;margin-top:34px;padding-top:16px;border-top:1px solid var(--line)}
+.ok{color:var(--ok);font-weight:600}
+.steps-flow{display:grid;gap:8px;margin:12px 0}
+.steps-flow div{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+.steps-flow b{font-family:var(--f-mono);font-size:.85rem;background:var(--mark);color:var(--on-mark);padding:1px 7px;border-radius:3px}
+@media(prefers-reduced-motion:no-preference){.tab,.btn{transition:background-color .12s}}
+
+.doit{border:2px solid var(--primary);border-radius:8px;background:var(--surface);padding:12px 18px 6px;margin:16px 0}
+.doit ol{margin:.5rem 0 .3rem;padding-left:1.3rem}
+.doit li{margin:.4rem 0;max-width:72ch}
+.doit .done{margin:.6rem 0;padding-top:.5rem;border-top:1px dashed var(--line)}
+.cellno{font:600 .72rem var(--f-mono);color:var(--muted);white-space:nowrap}
+.sheets{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0 12px}
+.sheets span{border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px;background:var(--head);padding:3px 10px 4px;font-size:.82rem}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Redress patterns workbench</h1>
+    <p>From a raw complaints file to subthemes, redress bands and monthly measures</p>
+  </div>
+</header>
+<nav class="tabs" id="tabs" aria-label="Steps"></nav>
+<main id="view"></main>
+
+<script>/*PURE-START*/
+const R = String.raw;
+const DEF = () => ({
+  table:'',
+  idCol:'', dateCol:'', redressCol:'',
+  wsCol:'', wsVals:'', themeCol:'', themeVals:'',
+  textFields:[{col:'',role:'Customer wording',disc:true,cls:true},{col:'',role:'Firm response',disc:true,cls:false}],
+  windowMode:'latest', startMonth:'', months:'6',
+  bands:[{label:'',lo:'',hi:''},{label:'',lo:'',hi:''},{label:'',lo:'',hi:''}],
+  redressPositive:true, minN:'10', modeStep:'5',
+  extraStop:'', lemma:'auto', ngramMax:'3', maxFeat:'20000', minDf:'5', topN:'25', k:'10', valPer:'15',
+  focus:'data_led', checks:{}
+});
+const EXAMPLE = () => Object.assign(DEF(), {
+  table:'Complaints',
+  idCol:'Complaint ID', dateCol:'Date Received', redressCol:'Redress Amount',
+  wsCol:'Product', wsVals:'Current Account', themeCol:'Complaint Theme', themeVals:'Fees and charges\nService',
+  textFields:[{col:'Complaint Summary',role:'Customer wording',disc:true,cls:true},{col:'Final Response',role:'Firm response',disc:false,cls:false}],
+  bands:[{label:'Band 1: up to £99',lo:'0.01',hi:'100'},{label:'Band 2: £100-£499',lo:'100',hi:'500'},{label:'Band 3: £500 and over',lo:'500',hi:''}]
+});
+const lines = s => String(s||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+const csv = s => String(s||'').split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);
+const cleanPhrase = s => String(s).toLowerCase().replace(/[^a-z]+/g,' ').trim();
+const pyStr = s => JSON.stringify(String(s));
+const pyList = a => '[' + a.map(pyStr).join(', ') + ']';
+const ph = (v,d) => (v && String(v).trim()) ? String(v).trim() : d;
+const num = v => { if(v===''||v==null) return null; const n=Number(v); return isFinite(n)?n:null; };
+const int = (v,d) => { const n=parseInt(v,10); return isFinite(n)&&n>0?n:d; };
+const STOPWORDS = 'a about above after again all also am an and any are as at be because been before being below between both but by can could did do does doing down during each few for from further get got had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up us very was we were what when where which while who whom why will with would you your yours yourself yourselves';
+const tf = () => { const a = cfg.textFields.filter(f=>String(f.col).trim()); return a.length ? a.map(f=>({...f,col:f.col.trim()})) : [{col:'Text column',role:'',disc:true,cls:true}]; };
+const idxs = key => { const t=tf(); const r=t.map((f,i)=>f[key]?i+1:0).filter(Boolean); return r.length?r:t.map((_,i)=>i+1); };
+const bandList = () => { const b=cfg.bands.filter(x=>String(x.label).trim()).map(x=>({label:x.label.trim(),lo:num(x.lo)??0,hi:num(x.hi)})); return b.length?b:[{label:'All redress',lo:0,hi:null}]; };
+const extraStop = () => csv(cfg.extraStop).map(cleanPhrase).filter(x=>x&&!x.includes(' '));
+const FOCUS_NAMES = {data_led:'the data-led taxonomy', fixed_a:'Fixed A', fixed_b:'Fixed B'};
+const focus = () => ['data_led','fixed_a','fixed_b'].includes(cfg.focus)?cfg.focus:'data_led';
+
+/* ---------------- Python cells ---------------- */
+function pyLoad(){
+  const ws=lines(cfg.wsVals), th=lines(cfg.themeVals), n=int(cfg.months,6);
+  const need=['ID_COL','DATE_COL','REDRESS_COL',...(ws.length?['WS_COL']:[]),...(th.length?['THEME_COL']:[])].join(', ');
+  const bands=bandList().map(b=>`    (${pyStr(b.label)}, ${b.lo}, ${b.hi==null?'None':b.hi}),`).join('\n');
+  const start=cfg.windowMode==='fixed'?cfg.startMonth:'';
+  const wsB=ws.length?R`df = df[df[WS_COL].astype(str).str.strip().str.lower().isin([v.strip().lower() for v in WS_VALS])]
+steps.append(("Workstream", len(df)))`:'# (no workstream filter set)';
+  const thB=th.length?R`df = df[df[THEME_COL].astype(str).str.strip().str.lower().isin([v.strip().lower() for v in THEME_VALS])]
+steps.append(("Theme", len(df)))`:'# (no theme filter set)';
+  const pos=cfg.redressPositive?R`df = df[df["redress"] > 0]
+steps.append(("Redress above zero", len(df)))`:'# (redress > 0 filter switched off)';
+  return R`import pandas as pd, numpy as np, re
+
+# ---- Your settings (generated from the workbench) ----
+ID_COL       = ${pyStr(ph(cfg.idCol,'Complaint ID'))}
+DATE_COL     = ${pyStr(ph(cfg.dateCol,'Date'))}
+REDRESS_COL  = ${pyStr(ph(cfg.redressCol,'Redress'))}
+WS_COL       = ${pyStr(ph(cfg.wsCol,''))}
+WS_VALS      = ${pyList(ws)}
+THEME_COL    = ${pyStr(ph(cfg.themeCol,''))}
+THEME_VALS   = ${pyList(th)}
+TEXT_COLS    = ${pyList(tf().map(f=>f.col))}
+N_MONTHS     = ${n}
+WINDOW_START = ${pyStr(start)}   # "" means: the latest N_MONTHS found in the data
+# (label, lower bound inclusive, upper bound exclusive or None)
+BANDS = [
+${bands}
+]
+BAND_ORDER = [b[0] for b in BANDS]
+
+raw = xl(${pyStr(ph(cfg.table,'Complaints')+'[#All]')}, headers=True)   # the Excel table holding your complaints
+needed = [${need}, *TEXT_COLS]
+missing = [c for c in needed if c not in raw.columns]
+assert not missing, f"Column(s) not found in the table: {missing}. Columns available: {list(raw.columns)}"
+
+# ---- Scope, one filter at a time, counting rows as we go ----
+df = raw.copy()
+steps = [("All rows", len(df))]
+${wsB}
+${thB}
+df["redress"] = pd.to_numeric(df[REDRESS_COL].astype(str).str.replace(r"[£,\s]", "", regex=True), errors="coerce")
+df = df[df["redress"].notna()]
+steps.append(("Redress readable as a number", len(df)))
+${pos}
+df["theme"] = df[THEME_COL].astype(str).str.strip() if THEME_COL else "(all)"   # the complaint theme, carried through unchanged
+df["date"] = pd.to_datetime(df[DATE_COL], errors="coerce", dayfirst=True)
+df = df[df["date"].notna()]
+steps.append(("Date readable", len(df)))
+
+# ---- Month window ----
+df["month"] = df["date"].dt.to_period("M")
+first = pd.Period(WINDOW_START, freq="M") if WINDOW_START else df["month"].max() - (N_MONTHS - 1)
+WINDOW = [str(first + i) for i in range(N_MONTHS)]
+df["month"] = df["month"].astype(str)
+df = df[df["month"].isin(WINDOW)].reset_index(drop=True)
+steps.append((f"In window {WINDOW[0]} to {WINDOW[-1]}", len(df)))
+
+# ---- Redress bands ----
+def band_of(x):
+    for label, lo, hi in BANDS:
+        if x >= lo and (hi is None or x < hi):
+            return label
+    return "Unbanded"
+df["band"] = df["redress"].map(band_of)
+
+funnel = pd.DataFrame(steps, columns=["step", "rows"])
+funnel["dropped"] = (funnel["rows"].shift(1) - funnel["rows"]).fillna(0).astype(int)
+funnel`;
+}
+
+function pyBandCheck(){
+  return R`chk = (df.groupby("band")["redress"]
+         .agg(complaints="size", min="min", max="max", mean="mean", median="median")
+         .reindex(BAND_ORDER + ["Unbanded"]).dropna(how="all").round(2).reset_index())
+chk["share"] = (chk["complaints"] / len(df)).round(3)
+chk   # "Unbanded" should be empty. If not, your band edges leave a gap.`;
+}
+
+function pyLemma(){
+  const N=tf().length;
+  return R`from collections import Counter, defaultdict
+
+STOP = set("${STOPWORDS}".split()) | set(${pyList(extraStop())})
+# Negations (no, not, never, nor, cannot, without) are deliberately NOT stop words.
+LEMMA_MODE = ${pyStr(cfg.lemma==='dict'?'dictionary':'auto')}   # "auto" tries WordNet first, "dictionary" never does
+
+freq = Counter(w for i in range(1, ${N}+1) for t in df[f"clean_{i}"] for w in t.split())
+
+SUFFIXES = ("ations", "ation", "ings", "ing", "ies", "ied", "ers", "er", "ed", "es", "s")
+def stem_key(w):
+    if len(w) > 3:
+        for suf in SUFFIXES:
+            if suf == "s" and w.endswith("ss"):
+                continue
+            if w.endswith(suf) and len(w) - len(suf) >= 3:
+                w = w[:-len(suf)]
+                break
+    return w[:-1] if w.endswith("e") and len(w) > 3 else w
+
+def build_canon(freq):
+    if LEMMA_MODE == "auto":
+        try:
+            from nltk.stem import WordNetLemmatizer
+            wn = WordNetLemmatizer()
+            wn.lemmatize("charges")            # raises if the WordNet data is not available
+            return {w: wn.lemmatize(wn.lemmatize(w, "v"), "n") for w in freq}, "WordNet lemmatiser"
+        except Exception:
+            pass
+    groups = defaultdict(list)                 # fallback: group by a light stem, show the commonest real word
+    for w, n in freq.items():
+        groups[stem_key(w)].append((n, w))
+    canon = {}
+    for members in groups.values():
+        best = max(members)[1]
+        for _, w in members:
+            canon[w] = best
+    return canon, "suffix rules + commonest form"
+
+CANON, METHOD = build_canon(freq)
+def normalise(t):
+    return " ".join(CANON.get(w, w) for w in t.split() if len(w) > 1 and w not in STOP)
+
+for i in range(1, ${N}+1):
+    df[f"norm_{i}"] = df[f"clean_{i}"].map(normalise)
+NORM_DISC = [f"norm_{i}" for i in ${JSON.stringify(idxs('disc'))}]     # fields used for discovery
+df["disc_text"] = df[NORM_DISC].agg(" ".join, axis=1)
+
+pd.DataFrame({"check": ["Lemmatising method", "Distinct words before", "Distinct words after",
+                        "Complaints with no usable text (classify)", "Complaints with no usable text (discover)"],
+              "value": [METHOD, len(freq), len(set(CANON.values())),
+                        int((df["cls_text"].str.strip() == "").sum()), int((df["disc_text"].str.strip() == "").sum())]})`;
+}
+
+function pyTerms(){
+  return R`from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+
+NGRAM_MAX    = ${int(cfg.ngramMax,3)}      # longest phrase: 3 = up to three words
+MAX_FEATURES = ${int(cfg.maxFeat,20000)}   # cap the vocabulary so 25k rows stay fast
+MIN_DF       = ${int(cfg.minDf,5)}         # ignore phrases in fewer than this many complaints
+TOP_N        = ${int(cfg.topN,25)}         # rows shown per phrase length
+
+vec = TfidfVectorizer(ngram_range=(1, NGRAM_MAX), min_df=MIN_DF, max_features=MAX_FEATURES, sublinear_tf=True)
+X = vec.fit_transform(df["disc_text"])
+terms = np.array(vec.get_feature_names_out())
+docs = np.asarray((X > 0).sum(axis=0)).ravel()
+tbl = pd.DataFrame({"term": terms, "words": [t.count(" ") + 1 for t in terms], "complaints": docs,
+                    "share": (docs / X.shape[0]).round(3),
+                    "avg_tfidf": np.asarray(X.mean(axis=0)).ravel().round(4)})
+top_terms = (tbl.sort_values("complaints", ascending=False)
+                .groupby("words").head(TOP_N).sort_values(["words", "complaints"], ascending=[True, False])
+                .reset_index(drop=True))
+top_terms`;
+}
+
+function pyBandTerms(){
+  return R`share_all = docs / X.shape[0]
+TOP_PER_BAND = 15
+rows = []
+for b in BAND_ORDER:
+    m = (df["band"] == b).to_numpy()
+    if m.sum() < ${int(cfg.minN,10)}:
+        continue
+    share_b = np.asarray((X[m] > 0).mean(axis=0)).ravel()
+    lift = np.where(share_b >= 0.02, share_b / (share_all + 1e-9), 0)   # in at least 2% of the band's complaints
+    for j in np.argsort(-lift)[:TOP_PER_BAND]:
+        if lift[j] > 0:
+            rows.append((b, int(m.sum()), terms[j], round(float(share_b[j]), 3), round(float(lift[j]), 1)))
+band_terms = pd.DataFrame(rows, columns=["band", "complaints_in_band", "term", "share_in_band", "lift_vs_all"])
+band_terms`;
+}
+
+function pyColloc(){
+  return R`cv = CountVectorizer(ngram_range=(1, 2), min_df=MIN_DF)
+C = cv.fit_transform(df["disc_text"])
+names = cv.get_feature_names_out()
+counts = np.asarray(C.sum(axis=0)).ravel()
+uni = {t: c for t, c in zip(names, counts) if " " not in t}
+N_TOK = sum(uni.values())
+rows = []
+for t, c in zip(names, counts):
+    if " " in t and c >= 10:
+        a, b = t.split(" ")
+        if a in uni and b in uni:
+            pmi = np.log2((c / N_TOK) / ((uni[a] / N_TOK) * (uni[b] / N_TOK)))
+            rows.append((t, int(c), round(float(pmi), 2)))
+colloc = pd.DataFrame(rows, columns=["phrase", "count", "pmi"]).sort_values("pmi", ascending=False).head(50).reset_index(drop=True)
+colloc   # high pmi = the words really belong together (a genuine phrase)`;
+}
+
+function pyFields(){
+  return R`out = {}
+for i, c in enumerate(TEXT_COLS, start=1):
+    cvi = CountVectorizer(ngram_range=(1, 2), min_df=MIN_DF, max_features=5000)
+    Xi = cvi.fit_transform(df[f"norm_{i}"])
+    nm = cvi.get_feature_names_out()
+    n = np.asarray((Xi > 0).sum(axis=0)).ravel()
+    out[c] = pd.Series([f"{nm[j]} ({n[j]})" for j in np.argsort(-n)[:30]])
+pd.DataFrame(out)   # same complaints, different field: what does each one add?`;
+}
+
+
+function pyClean(){
+  return R`def read_table(getter):
+    """Run a lookup such as lambda: xl("FixedA[#All]", headers=True). Returns None if that table does not exist."""
+    try:
+        return getter()
+    except Exception:
+        return None
+
+def clean_phrase(x):
+    return re.sub(r"[^a-z]+", " ", str(x).lower()).strip()
+
+# ---- Synonyms sheet: table "Synonyms" with columns Keep and Same as ----
+syn = read_table(lambda: xl("Synonyms[#All]", headers=True))
+SYN_GROUPS = []
+if syn is not None and {"Keep", "Same as"} <= set(syn.columns):
+    for keep, same in zip(syn["Keep"], syn["Same as"]):
+        if pd.isna(keep) or pd.isna(same):
+            continue
+        canon = clean_phrase(keep)
+        syns = sorted({clean_phrase(x) for x in re.split(r"[,;\n]+", str(same))} - {"", canon}, key=len, reverse=True)
+        if canon and syns:
+            SYN_GROUPS.append((canon, syns))
+SYN_RX = [(re.compile(r"\b(?:" + "|".join(map(re.escape, syns)) + r")\b"), canon) for canon, syns in SYN_GROUPS]
+
+# ---- Boilerplate sheet: table "Boilerplate" with column Phrase ----
+bp = read_table(lambda: xl("Boilerplate[#All]", headers=True))
+BOILERPLATE = []
+if bp is not None and "Phrase" in bp.columns:
+    BOILERPLATE = [p for p in (clean_phrase(x) for x in bp["Phrase"].dropna()) if p]
+BOILER_RX = [re.compile(r"\b" + re.escape(p) + r"\b") for p in BOILERPLATE]
+
+def clean_text(t):
+    t = str(t).lower()
+    t = re.sub(r"\S+@\S+", " ", t)                              # email addresses
+    t = re.sub(r"\b[a-z]{1,3}\d{5,}\b|\b\d{5,}\b", " ", t)      # reference and account numbers
+    t = re.sub(r"[^a-z]+", " ", t).strip()                      # letters only
+    for rx in BOILER_RX:
+        t = rx.sub(" ", t)                                      # sign-offs and template phrases
+    for rx, canon in SYN_RX:
+        t = rx.sub(canon, t)                                    # synonyms -> one canonical word
+    return re.sub(r"\s+", " ", t).strip()
+
+for i, c in enumerate(TEXT_COLS, start=1):
+    df[f"clean_{i}"] = df[c].fillna("").astype(str).map(clean_text)
+
+CLEAN_CLS = [f"clean_{i}" for i in ${JSON.stringify(idxs('cls'))}]     # fields used to classify
+df["cls_text"] = df[CLEAN_CLS].agg(" ".join, axis=1)
+
+df[[TEXT_COLS[0], "clean_1"]].head(8)   # eyeball: before and after`;
+}
+
+function pyKCompare(){
+  return R`from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.decomposition import NMF
+from sklearn.metrics import adjusted_rand_score
+
+MIN_DF = ${int(cfg.minDf,5)}     # ignore phrases in fewer than this many complaints
+
+ONLY_BAND = ""     # leave blank to cluster every complaint, or put a band label here to cluster just that band
+dd = df if not ONLY_BAND else df[df["band"] == ONLY_BAND]
+assert len(dd) >= 150, f"Only {len(dd)} complaints to cluster. Clear ONLY_BAND, or check your band label."
+vec2 = TfidfVectorizer(ngram_range=(1, 2), min_df=MIN_DF, max_features=8000, sublinear_tf=True)
+X2 = vec2.fit_transform(dd["disc_text"])
+terms2 = np.array(vec2.get_feature_names_out())
+
+# Try several cluster counts on a sample, twice with different random starts. It can take a few minutes: run it once.
+sample = np.random.RandomState(0).choice(X2.shape[0], size=min(6000, X2.shape[0]), replace=False)
+Xs = X2[sample]
+rows = []
+for k in [6, 8, 10, 12, 15, 20]:
+    labs = [NMF(n_components=k, init="random", random_state=sd, max_iter=200).fit_transform(Xs).argmax(axis=1) for sd in (1, 2)]
+    share = np.bincount(labs[0], minlength=k) / len(labs[0])
+    rows.append((k, round(float(adjusted_rand_score(labs[0], labs[1])), 2), round(float(share.min()), 3), round(float(share.max()), 3)))
+k_compare = pd.DataFrame(rows, columns=["clusters", "stability (0 to 1)", "smallest cluster share", "largest cluster share"])
+k_compare   # prefer high stability, no tiny or dominant cluster, and clusters that read as different issues`;
+}
+function pyClusters(){
+  return R`K = ${int(cfg.k,10)}   # number of clusters: choose it using the comparison above
+nmf = NMF(n_components=K, init="nndsvd", random_state=42, max_iter=300)
+W = nmf.fit_transform(X2)
+df["cluster"] = 0                                   # 0 = not clustered
+df.loc[dd.index, "cluster"] = W.argmax(axis=1) + 1
+df.loc[dd.index[W.sum(axis=1) == 0], "cluster"] = 0
+cluster_terms = pd.DataFrame({f"Cluster {i+1}": terms2[np.argsort(-nmf.components_[i])[:12]] for i in range(K)})
+cluster_terms`;
+}
+function pyClusterSum(){
+  return R`cs = df[df["cluster"] > 0]
+cluster_summary = (cs.groupby("cluster")
+    .agg(complaints=("redress", "size"), mean_redress=("redress", "mean"), median_redress=("redress", "median")).round(2))
+mix = pd.crosstab(cs["cluster"], cs["band"], normalize="index").reindex(columns=BAND_ORDER, fill_value=0).round(2)
+mix.columns = [f"share in {b}" for b in mix.columns]
+cluster_summary = cluster_summary.join(mix).reset_index()
+cluster_summary["share of clustered"] = (cluster_summary["complaints"] / len(cs)).round(3)
+cluster_summary   # which clusters are expensive? which sit in the top band?`;
+}
+function pyExamples(){
+  return R`EX_N = 3      # complaints shown per cluster
+RAW = TEXT_COLS[${idxs('cls')[0]-1}]
+rows = []
+for k in range(K):
+    for j in np.argsort(-W[:, k])[:EX_N]:          # the most typical complaints for this cluster
+        r = dd.iloc[j]
+        rows.append((k + 1, r[ID_COL], r["redress"], str(r[RAW])[:300]))
+pd.DataFrame(rows, columns=["cluster", "complaint_id", "redress", "text"])   # read these before naming a cluster`;
+}
+function pyDraft(){
+  return R`# Draft data-led taxonomy in the DataLed table format: Theme, Reference category, Subtheme, Keywords, Notes.
+NEGATIONS = {"not", "no", "never", "nor", "cannot", "without"}   # too broad alone: read them in the phrases instead
+H = nmf.components_
+excl = H / (H.sum(axis=0, keepdims=True) + 1e-9)               # how exclusive each term is to one cluster
+too_common = np.asarray((X2 > 0).mean(axis=0)).ravel() > 0.40    # ignore words that appear in most complaints
+rows = []
+for k in range(K):
+    score = H[k] * excl[k]
+    score[too_common] = 0
+    order = np.argsort(-score)[:80]
+    words = [terms2[j] for j in order if " " not in terms2[j] and score[j] > 0 and terms2[j] not in NEGATIONS][:12]
+    phrases = [terms2[j] for j in order if " " in terms2[j] and score[j] > 0][:6]
+    kws, seen = [], set()
+    for w in words:
+        stem = stem_key(w)
+        stem = stem + "*" if len(stem) >= 4 else stem                 # word* catches plurals and other endings
+        if len(stem) >= 3 and stem not in seen:
+            seen.add(stem); kws.append(stem)
+    m = df["cluster"] == k + 1
+    med = round(float(df.loc[m, "redress"].median()), 2)
+    rows.append({"Theme": "", "Reference category": "", "Subtheme": f"Cluster {k+1} (name me)", "Keywords": ", ".join(kws),
+                 "Notes": f"Phrases to read: {', '.join(phrases)} | {int(m.sum())} complaints, median {med}"})
+draft = pd.DataFrame(rows)
+draft   # copy this into the DataLed sheet, then rename each cluster and tidy the keywords`;
+}
+
+function pyTaxonomies(){
+  return R`# Reads your three taxonomy tables from the workbook: DataLed, FixedA, FixedB. Each has the columns
+# Theme, Reference category, Subtheme, Keywords, Notes. Missing tables are fine: that taxonomy is simply not used.
+OTHER = "Other / unclassified"
+NEEDED = ["Theme", "Reference category", "Subtheme", "Keywords"]
+
+def term_regex(term):
+    """Turn one keyword into a pattern that also catches plurals and -ed/-ing forms. word* catches any ending."""
+    t = re.sub(r"[^a-z\s*]", " ", str(term).lower())
+    t = re.sub(r"\s+", " ", t).strip()
+    for rx, canon in SYN_RX:
+        t = rx.sub(canon, t)                       # keywords use the same synonyms as the complaint text
+    words = [w for w in t.split(" ") if w.replace("*", "")]
+    if not words:
+        return None
+    parts = []
+    for i, w in enumerate(words):
+        b = w.replace("*", "")
+        if "*" in w:
+            parts.append(re.escape(b) + r"\w*")
+        elif i < len(words) - 1:
+            parts.append(re.escape(b))
+        else:
+            base = b[:-1] if (b.endswith("e") and len(b) > 4) else b
+            parts.append(re.escape(base) + r"(?:e|es|ed|ing|s)?")
+    return r"\b" + r"\s+".join(parts) + r"\b"
+
+def cell(v):
+    return "" if pd.isna(v) else str(v).strip()
+
+def build_rules(tdf):
+    """Return (rules, problems). A rule is (subtheme, reference category, theme, [(keyword, pattern), ...])."""
+    rules, problems = [], []
+    if tdf is None:
+        return rules, ["table not found (fine if you are not using this taxonomy)"]
+    missing = [c for c in NEEDED if c not in tdf.columns]
+    if missing:
+        return rules, [f"missing column(s) {missing}; found {list(tdf.columns)}"]
+    seen = set()
+    for n, (_, r) in enumerate(tdf.iterrows(), start=2):          # row 1 is the header
+        name, kws = cell(r["Subtheme"]), cell(r["Keywords"])
+        if not name and not kws:
+            continue                                              # blank row
+        if not name:
+            problems.append(f"row {n}: keywords but no Subtheme name"); continue
+        items = []
+        for k in re.split(r"[,;\n]+", kws):
+            k = k.strip().strip('"')
+            rx = term_regex(k) if k else None
+            if rx:
+                items.append((k, rx))
+        if not items:
+            problems.append(f"row {n} ({name}): no usable keywords"); continue
+        if name.lower() in seen:
+            problems.append(f"row {n}: '{name}' appears twice (fine only if the Theme differs)")
+        seen.add(name.lower())
+        rules.append((name, cell(r["Reference category"]) or "Unmapped", cell(r["Theme"]), items))
+    return rules, problems
+
+TABLES = {
+    "data_led": read_table(lambda: xl("DataLed[#All]", headers=True)),
+    "fixed_a": read_table(lambda: xl("FixedA[#All]", headers=True)),
+    "fixed_b": read_table(lambda: xl("FixedB[#All]", headers=True)),
+}
+RULESETS, rows = {}, []
+for key, tdf in TABLES.items():
+    RULESETS[key], problems = build_rules(tdf)
+    rows.append({"what": key, "found": "yes" if tdf is not None else "NO", "subthemes": len(RULESETS[key]),
+                 "keywords": sum(len(r[3]) for r in RULESETS[key]), "problems": "; ".join(problems) or "none"})
+rows.append({"what": "synonyms", "found": "yes" if syn is not None else "no (optional)", "subthemes": len(SYN_GROUPS),
+             "keywords": sum(len(g[1]) for g in SYN_GROUPS), "problems": "none"})
+rows.append({"what": "boilerplate phrases", "found": "yes" if bp is not None else "no (optional)", "subthemes": "",
+             "keywords": len(BOILERPLATE), "problems": "none"})
+
+def apply_rules(rules, texts, themes):
+    comp = [(th.lower(), [re.compile(rx) for _, rx in items]) for _, _, th, items in rules]
+    return [[i for i, (th, pats) in enumerate(comp) if (not th or th == t) and any(p.search(x) for p in pats)]
+            for x, t in zip(texts, themes)]
+
+pd.DataFrame(rows)   # "subthemes" is the number of rows read; "keywords" the number of keywords across them`;
+}
+function pyApply(){
+  return R`FOCUS = ${pyStr(focus())}     # the taxonomy you are working on: "data_led", "fixed_a" or "fixed_b"
+
+# Every complaint gets one label per taxonomy: the FIRST row (top to bottom) whose keywords match.
+# The label columns are data_led, fixed_a and fixed_b. The *_ref columns hold the reference category, *_all lists every match.
+for key, rules in RULESETS.items():
+    hits = pd.Series(apply_rules(rules, df["cls_text"], df["theme"].str.lower()), index=df.index, dtype=object)
+    first = hits.map(lambda h: h[0] if h else -1)
+    df[key] = first.map(lambda i, r=rules: r[i][0] if i >= 0 else OTHER)
+    df[key + "_ref"] = first.map(lambda i, r=rules: r[i][1] if i >= 0 else "Unmapped")
+    df[key + "_all"] = hits.map(lambda h, r=rules: " | ".join(r[i][0] for i in h))
+    df[key + "_n"] = hits.str.len()
+
+all_other = (df[list(RULESETS)] == OTHER).all(axis=1)
+headline = pd.DataFrame({
+    "taxonomy": list(RULESETS),
+    "subthemes": [len(r) for r in RULESETS.values()],
+    "complaints in Other": [int((df[k] == OTHER).sum()) for k in RULESETS],
+    "% in Other": [round(float((df[k] == OTHER).mean()) * 100, 1) for k in RULESETS],
+    "% matching 2+ rows": [round(float((df[k + "_n"] > 1).mean()) * 100, 1) for k in RULESETS]})
+headline.loc[len(headline)] = ["nothing catches it (all three)", np.nan, int(all_other.sum()), round(float(all_other.mean()) * 100, 1), np.nan]
+headline   # aim for Other under about 10% in the taxonomy you are working on`;
+}
+function pyCoverage(){
+  return R`frames = []
+for key in RULESETS:
+    g = (df.groupby(key).agg(complaints=("redress", "size"), mean_redress=("redress", "mean"), median_redress=("redress", "median"))
+           .round(2).reset_index().rename(columns={key: "subtheme"}))
+    g["share"] = (g["complaints"] / len(df)).round(3)
+    g.insert(0, "taxonomy", key)
+    frames.append(g.sort_values("complaints", ascending=False))
+pd.concat(frames, ignore_index=True)`;
+}
+function pyDiag(){
+  return R`kw = [(key, name, term, int(df["cls_text"].str.contains(rx, regex=True).sum()))
+      for key, rules in RULESETS.items() for name, _, _, items in rules for term, rx in items]
+pd.DataFrame(kw, columns=["taxonomy", "subtheme", "keyword", "complaints"]).sort_values(
+    ["taxonomy", "subtheme", "complaints"], ascending=[True, True, False]).reset_index(drop=True)
+# zero = dead keyword. Very high = probably too broad. (Counts ignore any Theme limit on the row.)`;
+}
+function pyOverlap(){
+  return R`X_LABEL, Y_LABEL = "data_led", "fixed_a"     # compare any two of: data_led, fixed_a, fixed_b
+pd.crosstab(df[X_LABEL], df[Y_LABEL]).reset_index()   # rows = first taxonomy, columns = second: where does each subtheme land?`;
+}
+function pyResidTerms(){
+  return R`resid = df[df[FOCUS] == OTHER]
+if len(resid) < 20:
+    resid_terms = pd.DataFrame({"note": [f"Only {len(resid)} complaints in Other for {FOCUS}, nothing to mine."]})
+else:
+    cvr = CountVectorizer(ngram_range=(1, 3), min_df=max(3, int(len(resid) * 0.005)))
+    Xr = cvr.fit_transform(resid["disc_text"])
+    nr = np.asarray((Xr > 0).sum(axis=0)).ravel()
+    resid_terms = (pd.DataFrame({"term": cvr.get_feature_names_out(), "complaints": nr, "share_of_other": (nr / len(resid)).round(3)})
+                     .sort_values("complaints", ascending=False).head(60).reset_index(drop=True))
+resid_terms   # common phrases in the complaints this taxonomy has not claimed yet`;
+}
+function pyResidSample(){
+  return R`resid = df[df[FOCUS] == OTHER]
+resid.sample(min(30, len(resid)), random_state=1)[[ID_COL, *TEXT_COLS, "redress"]]   # read these, then add keywords in Excel`;
+}
+function pyValSample(){
+  return R`VAL_PER = ${int(cfg.valPer,15)}     # complaints to hand-label per subtheme
+val = (df.assign(_r=np.random.RandomState(7).rand(len(df))).sort_values("_r")
+         .groupby(FOCUS).head(VAL_PER)[[ID_COL, *TEXT_COLS, FOCUS]].rename(columns={FOCUS: "rule_label"}).copy())
+val["human_label"] = ""
+val   # paste as values into a new sheet, make it a Table named Validation, fill human_label by hand`;
+}
+function pyAgree(){
+  return R`from sklearn.metrics import cohen_kappa_score
+v = xl("Validation[#All]", headers=True)
+v = v[v["human_label"].astype(str).str.strip() != ""].copy()
+v["human_label"] = v["human_label"].astype(str).str.strip()
+v["match"] = v["rule_label"] == v["human_label"]
+by_sub = (v.groupby("rule_label")["match"].agg(["size", "mean"]).round(2).reset_index()
+           .rename(columns={"rule_label": "subtheme", "size": "labelled", "mean": "agreement"}))
+overall = pd.DataFrame({"subtheme": ["OVERALL"], "labelled": [len(v)], "agreement": [round(float(v["match"].mean()), 2)]})
+out = pd.concat([overall, by_sub], ignore_index=True)
+out["kappa"] = round(float(cohen_kappa_score(v["rule_label"], v["human_label"])), 2)
+out   # judge each subtheme's agreement, not just the overall figure`;
+}
+function pyConfusion(){
+  return R`pd.crosstab(v["human_label"], v["rule_label"]).reset_index()   # rows = you, columns = the rules`;
+}
+function pyMeasureSetup(){
+  return R`MIN_N = ${int(cfg.minN,10)}         # suppress statistics for groups smaller than this
+MODE_STEP = ${int(cfg.modeStep,5)}       # round redress to the nearest £${int(cfg.modeStep,5)} before finding the mode
+MEASURE_BY = ${pyStr(focus())}   # which taxonomy the tables below use: "data_led", "fixed_a" or "fixed_b"
+
+dfm = df.copy()
+dfm["subtheme"] = dfm[MEASURE_BY]
+dfm["ref_category"] = dfm[MEASURE_BY + "_ref"]
+dfm["band"] = pd.Categorical(dfm["band"], categories=BAND_ORDER + ["Unbanded"], ordered=True)
+
+def mode_of(s):
+    r = ((s / MODE_STEP).round() * MODE_STEP).value_counts()
+    return r[r == r.max()].index.min()
+def mode_share(s):
+    r = ((s / MODE_STEP).round() * MODE_STEP).value_counts()
+    return r.max() / len(s)
+def trim_mean(s, p=0.1):
+    v = np.sort(s.to_numpy()); k = int(len(v) * p)
+    return v[k:len(v) - k].mean() if len(v) - 2 * k > 0 else v.mean()
+
+STATS = ["mean", "median", "mode", "mode_share", "trimmed_mean", "p75", "p90"]
+def build(keys, data=None):
+    data = dfm if data is None else data
+    out = (data.groupby(keys, observed=True)["redress"]
+               .agg(volume="size", total="sum", mean="mean", median="median", mode=mode_of, mode_share=mode_share,
+                    trimmed_mean=trim_mean, p75=lambda s: s.quantile(.75), p90=lambda s: s.quantile(.90))
+               .reset_index())
+    out.loc[out["volume"] < MIN_N, STATS] = np.nan    # blank, not zero, when the group is too small
+    return out.round(2)
+
+build(["subtheme"]).sort_values("volume", ascending=False).reset_index(drop=True)   # whole window, by subtheme`;
+}
+const pyBySub = () => R`build(["subtheme"]).sort_values("volume", ascending=False).reset_index(drop=True)`;
+const pyByRef = () => R`build(["ref_category"]).sort_values("volume", ascending=False).reset_index(drop=True)`;
+const pyByTheme = () => R`build(["theme", "subtheme"])   # theme (from your data) then subtheme (from the taxonomy)`;
+const pyByBand = () => R`build(["subtheme", "band"])`;
+const pyByMonth = () => R`build(["subtheme", "month"])`;
+function pyWide(){
+  return R`long = build(["subtheme", "month"])
+metrics = ["volume", "mean", "median"]
+wide = long.pivot(index="subtheme", columns="month", values=metrics)
+wide = wide.reindex(columns=pd.MultiIndex.from_product([metrics, WINDOW]))
+wide.columns = [f"{m} | {mo}" for m, mo in wide.columns]
+wide.reset_index()`;
+}
+const pyGrid = () => R`build(["theme", "ref_category", "subtheme", "band", "month"])   # the full grid: build a PivotTable on this`;
+function pySide(){
+  return R`parts = []
+for key in RULESETS:
+    t = build(["subtheme"], df.assign(subtheme=df[key]))
+    t.insert(0, "taxonomy", key)
+    parts.append(t.sort_values("volume", ascending=False))
+pd.concat(parts, ignore_index=True)   # the same complaints measured under each taxonomy`;
+}
+function pyExport(){
+  return R`cols = [c for c in [ID_COL, "theme", "month", "band", "redress", "data_led", "data_led_ref", "fixed_a", "fixed_a_ref", "fixed_b", "fixed_b_ref", "cluster"] if c in df.columns]
+df[cols]   # one row per complaint: good for audit, spot checks and PivotTables`;
+}
+
+/* ---------------- Cell registry ---------------- */
+const SHEET = {prep:'Prep', dl:'Discover', fixed:'Taxonomies', classify:'Classify', measure:'Measure'};
+const CELLS = {
+  prep:[
+    {id:'load',title:'Load, scope, month window and bands',out:'Output: Excel values. The table is your row funnel.',py:pyLoad},
+    {id:'check',title:'Check the bands cover your data',out:'Output: Excel values.',py:pyBandCheck},
+    {id:'clean',title:'Clean the text',out:'Output: Excel values. Compare the before and after columns.',py:pyClean},
+    {id:'lemma',title:'Lemmatise and remove stop words',out:'Output: Excel values.',py:pyLemma}
+  ],
+  dl:[
+    {id:'terms',title:'Common words and phrases',out:'Output: Excel values.',py:pyTerms},
+    {id:'band',title:'Phrases that stand out in each redress band',out:'Output: Excel values.',py:pyBandTerms},
+    {id:'colloc',title:'Phrases that belong together',out:'Output: Excel values.',py:pyColloc},
+    {id:'fields',title:'What each text field adds',out:'Output: Excel values.',py:pyFields,show:()=>tf().length>1},
+    {id:'kcompare',title:'How many clusters? (slow, run once)',out:'Output: Excel values.',py:pyKCompare},
+    {id:'clusters',title:'Fit the clusters',out:'Output: Excel values. Each column is one cluster.',py:pyClusters},
+    {id:'clsum',title:'What each cluster costs and where it sits',out:'Output: Excel values.',py:pyClusterSum},
+    {id:'examples',title:'Read typical complaints from each cluster',out:'Output: Excel values.',py:pyExamples},
+    {id:'draft',title:'Draft the data-led taxonomy',out:'Output: Excel values. Copy this into the DataLed sheet.',py:pyDraft}
+  ],
+  fixed:[
+    {id:'load',title:'Read and check all three taxonomy tables',out:'Output: Excel values. Read the problems column.',py:pyTaxonomies}
+  ],
+  classify:[
+    {id:'apply',title:'Label every complaint under each taxonomy',out:'Output: Excel values. The headline table.',py:pyApply},
+    {id:'coverage',title:'Volume and redress for every subtheme',out:'Output: Excel values.',py:pyCoverage},
+    {id:'diag',title:'Which keywords earn their place?',out:'Output: Excel values.',py:pyDiag},
+    {id:'overlap',title:'How two taxonomies line up',out:'Output: Excel values.',py:pyOverlap},
+    {id:'residterms',title:'Left in Other: common phrases',out:'Output: Excel values.',py:pyResidTerms},
+    {id:'residsample',title:'Left in Other: read 30 of them',out:'Output: Excel values.',py:pyResidSample},
+    {id:'valsample',title:'Draw a sample to label by hand',out:'Output: Excel values, pasted into a new sheet.',py:pyValSample},
+    {id:'agree',title:'Measure agreement with your labels',out:'Output: Excel values. Run after labelling.',py:pyAgree},
+    {id:'confusion',title:'Where the rules and you disagree',out:'Output: Excel values.',py:pyConfusion}
+  ],
+  measure:[
+    {id:'setup',title:'Set up the measures',out:'Output: Excel values.',py:pyMeasureSetup},
+    {id:'sub',title:'Volume and redress by subtheme',out:'Output: Excel values.',py:pyBySub},
+    {id:'side',title:'All three taxonomies side by side',out:'Output: Excel values.',py:pySide},
+    {id:'ref',title:'By reference category',out:'Output: Excel values.',py:pyByRef},
+    {id:'theme',title:'Theme, then subtheme',out:'Output: Excel values.',py:pyByTheme},
+    {id:'band',title:'Subtheme by redress band',out:'Output: Excel values.',py:pyByBand},
+    {id:'month',title:'Subtheme by month, long format',out:'Output: Excel values.',py:pyByMonth},
+    {id:'wide',title:'Subtheme by month, side by side',out:'Output: Excel values.',py:pyWide},
+    {id:'grid',title:'The full grid: theme, subtheme, band and month',out:'Output: Excel values. Base a PivotTable on it.',py:pyGrid},
+    {id:'export',title:'One row per complaint, for audit',out:'Output: Excel values.',py:pyExport}
+  ]
+};
+/*PURE-END*/
+
+/* ================= UI ================= */
+const EXT = {"cols": ["Theme", "Reference category", "Subtheme", "Keywords", "Notes"], "fixedA": [["Fees and charges", "Charges", "Overdraft fees", "overdraft, overdrawn*, unarranged", "Only for the Fees and charges theme"], ["Fees and charges", "Charges", "Charge not explained", "not told, no warning, unexpected charge, not aware", "Specific, so it sits above the general one below"], ["", "Charges", "Wrong charge applied", "incorrect*, wrongly, error, mistake", "Blank Theme = applies to every theme"], ["", "Service", "Delay to refund", "refund*, chased, still waiting, not received", ""]], "fixedB": [["", "Charges and fees", "Charges and fees", "charge*, overdraft*, interest", ""], ["", "Contact and communication", "Contact and communication", "letter*, call*, phone, chased, email, response", ""], ["", "Fraud and security", "Fraud and security", "fraud*, scam*, unauthorised, stolen, hack*", ""], ["", "Everyday service", "Everyday service", "queue*, branch, staff, rude, app, crash*, declin*", ""]], "dataLed": [["", "Service", "Card declined abroad", "declin*, abroad, foreign, blocked, holiday", "Phrases to read: card declined, used abroad"], ["", "Service", "Letters and paperwork", "letter*, form*, paperwork, post, arrive*", "Phrases to read: letter never, sent form"], ["", "Charges", "Direct debit taken twice", "direct debit, twice, duplicate, double, taken again", "Phrases to read: taken twice, direct debit"], ["", "Service", "Branch queues and staff", "queue*, branch, staff, appointment, waiting", "Phrases to read: long queue, branch staff"]], "synonyms": [["charge", "fee, fees, charges, chg"], ["refund", "reimburse, reimbursed, money back"], ["phone", "call, rang, telephone"]], "boiler": [["kind regards"], ["yours sincerely"], ["thank you for your email"], ["dear sir or madam"], ["we are sorry to hear"]]};
+let cfg = DEF(), step = 0;
+const $ = (s,r=document) => r.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const colLetter = n => { let s='',k=n+1; while(k>0){const m=(k-1)%26; s=String.fromCharCode(65+m)+s; k=Math.floor((k-1)/26);} return s; };
+function load(){
+  try{
+    const s=localStorage.getItem('rpw2_cfg'); if(s) cfg=Object.assign(DEF(),JSON.parse(s));
+    const u=JSON.parse(localStorage.getItem('rpw2_ui')||'null'); if(u) step=Math.min(Math.max(u.step|0,0),7);
+  }catch(e){}
+}
+function save(){ try{ localStorage.setItem('rpw2_cfg',JSON.stringify(cfg)); localStorage.setItem('rpw2_ui',JSON.stringify({step})); }catch(e){} }
+const getP = p => p.split('.').reduce((o,k)=>o==null?o:o[k],cfg);
+function setP(p,v){ const ks=p.split('.'); let o=cfg; for(let i=0;i<ks.length-1;i++) o=o[ks[i]]; o[ks[ks.length-1]]=v; }
+
+function hl(text){
+  return text.split('\n').map(l=>{
+    let q=null,cut=-1;
+    for(let i=0;i<l.length;i++){ const ch=l[i];
+      if(q){ if(ch==='\\'){i++;continue;} if(ch===q) q=null; }
+      else if(ch==='"'||ch==="'") q=ch;
+      else if(ch==='#'){cut=i;break;}
+    }
+    return cut<0?esc(l):esc(l.slice(0,cut))+'<span class="c">'+esc(l.slice(cut))+'</span>';
+  }).join('\n');
+}
+function missing(){
+  const m=[];
+  if(!cfg.table.trim()) m.push('Excel table name');
+  if(!cfg.idCol.trim()) m.push('complaint ID column');
+  if(!cfg.dateCol.trim()) m.push('date column');
+  if(!cfg.redressCol.trim()) m.push('redress column');
+  if(!cfg.textFields.some(f=>f.col.trim())) m.push('a free-text column');
+  if(!cfg.bands.some(b=>b.label.trim())) m.push('redress bands');
+  return m;
+}
+const tbl = (head,rows,left=[]) => `<div class="scroll"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${left.includes(i)?' style="text-align:left"':''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+const STEPS=[
+  {tab:'Start',render:renderStart},{tab:'Your data',render:renderData},
+  {tab:'Prepare',render:()=>codeStep('prep')},{tab:'Data-led',render:()=>codeStep('dl')},
+  {tab:'Fixed',render:renderFixed},{tab:'Classify',render:()=>codeStep('classify')},
+  {tab:'Measure',render:()=>codeStep('measure')},{tab:'Finish',render:renderFinish}
+];
+function renderTabs(){
+  $('#tabs').innerHTML=STEPS.map((s,i)=>`<button class="tab" data-go="${i}" aria-current="${i===step}"><span class="n">${i+1}</span>${esc(s.tab)}</button>`).join('');
+  const cur=$('.tab[aria-current="true"]'); if(cur&&cur.scrollIntoView) cur.scrollIntoView({inline:'center',block:'nearest'});
+}
+function pager(){
+  const b=step>0?`<button class="btn ghost" data-go="${step-1}">Back: ${esc(STEPS[step-1].tab)}</button>`:'<span></span>';
+  const n=step<STEPS.length-1?`<button class="btn" data-go="${step+1}">Next: ${esc(STEPS[step+1].tab)}</button>`:'<span></span>';
+  return `<div class="pager">${b}${n}</div>`;
+}
+function render(){
+  save();
+  $('#view').innerHTML=STEPS[step].render()+pager();
+  renderTabs(); refresh();
+}
+function refresh(){
+  document.querySelectorAll('pre[data-cell]').forEach(pre=>{
+    const [k,id]=pre.dataset.cell.split('.'); const c=CELLS[k].find(x=>x.id===id);
+    try{ pre.innerHTML=hl(c.py()); }catch(e){ pre.textContent='Could not build this code: '+e.message; }
+  });
+  document.querySelectorAll('pre[data-cp]').forEach(p=>{p.textContent=COPILOT[p.dataset.cp]();});
+  const a=$('pre[data-all]'); if(a) a.textContent=allPy();
+  const mb=$('#missing'); if(mb){ const m=missing(); mb.hidden=!m.length; if(m.length) mb.querySelector('span').textContent=m.join(', '); }
+}
+
+/* ---------- reusable blocks ---------- */
+const doit=(items,done)=>`<div class="doit"><strong>Do this</strong><ol>${items.map(x=>`<li>${x}</li>`).join('')}</ol><p class="done"><strong>You are done when:</strong> ${done}</p></div>`;
+function inp(label,path,o={}){
+  const v=getP(path);
+  return `<label class="f">${esc(label)}${o.hint?`<span class="hint">${o.hint}</span>`:''}<input type="text" data-bind="${path}" value="${esc(v)}" placeholder="${esc(o.ph||'')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`;
+}
+function focusSelect(){
+  const f=focus();
+  return `<label class="f" style="max-width:420px">Taxonomy you are working on<select data-bind="focus">${Object.entries(FOCUS_NAMES).map(([k,v])=>`<option value="${k}" ${f===k?'selected':''}>${esc(v)}</option>`).join('')}</select>
+  <span class="hint">Used for the Other review, the hand-label check and the measures. You can also just edit the first line of the cell in Excel.</span></label>`;
+}
+function cellHtml(key,c,i,n){
+  const name=`${SHEET[key]}!${colLetter(i*13)}1`;
+  return `<div class="cell"><div class="cell-head"><span class="namebox">${esc(name)}</span><span class="cellno">${i+1} of ${n}</span><span class="cell-title">${esc(c.title)}</span><button class="btn ghost tiny" data-copy="${key}.${c.id}">Copy</button></div>
+  <div class="cell-meta">${esc(c.out||'')}</div>
+  <pre class="code" data-cell="${key}.${c.id}" tabindex="0"></pre></div>`;
+}
+function cellsBlock(key){
+  const cells=CELLS[key].filter(c=>!c.show||c.show());
+  return cells.map((c,i)=>cellHtml(key,c,i,cells.length)).join('');
+}
+const missBanner=()=>`<div class="note" id="missing" hidden>Some settings in step 2 are still blank, so the code uses placeholders for: <span></span>. <button class="btn ghost tiny" data-go="1">Fill in</button></div>`;
+const addr=key=>`Put the cells on a sheet called <strong>${SHEET[key]}</strong>. The address on each cell keeps them in the right order and stops tables running into each other.`;
+
+/* ---------- Start ---------- */
+function renderStart(){
+  const chk=(k,t)=>`<label class="chk"><input type="checkbox" data-bind="checks.${k}" ${cfg.checks[k]?'checked':''}><span>${t}</span></label>`;
+  const sheets=['Complaints','Synonyms','Boilerplate','DataLed','FixedA','FixedB','Prep','Discover','Taxonomies','Classify','Measure','Validation'];
+  return `
+  <h2>Redress patterns, step by step</h2>
+  <p class="lead">You will label every complaint <strong>three ways</strong>, then measure volume and redress by any of them.</p>
+  <ul class="tight">
+    <li><strong>Data-led taxonomy.</strong> Built from your own complaints by clustering. You make it first (steps 3 and 4).</li>
+    <li><strong>Fixed taxonomy A and B.</strong> Two sets of categories you write yourself, for example your own subthemes and a set of reference categories (step 5).</li>
+  </ul>
+  <div class="panel">
+    <p class="small muted" style="margin-top:0">What you will end up with (example numbers only)</p>
+    ${tbl(['Subtheme','Volume','Median','Volume','Median','Volume','Median'],[
+      ['Charge not explained',84,'£45',91,'£50',77,'£45'],['Delay to refund',52,'£120',47,'£115',60,'£130'],['Wrong charge applied',38,'£75',41,'£70',35,'£80'],['Other / unclassified',9,'–',12,'£40',8,'–']])}
+    <p class="small muted">Columns are Month 1, 2 and 3. A dash means the group is smaller than your minimum, so no statistics are shown. The same grid is built for mean, mode and each redress band.</p>
+  </div>
+
+  <h3>First, get the example workbook</h3>
+  <div class="panel">
+    <p style="margin-top:0"><a class="btn" href="redress-example-workbook.xlsx" download>Download the example workbook</a></p>
+    <p class="small muted">If the button does nothing, the file <em>redress-example-workbook.xlsx</em> was supplied alongside this page. It has invented complaints and example taxonomies so you can practise every step, and a README sheet. To use your real data, replace the rows in the <em>Complaints</em> table and clear the example rows in the other tables.</p>
+    <p><strong>Your workbook has these sheets, in this order:</strong></p>
+    <div class="sheets">${sheets.map(s=>`<span>${s}</span>`).join('')}</div>
+    ${tbl(['Sheet','Excel table','What goes in it','Who fills it'],[
+      ['Complaints','Complaints','Your extract, one row per complaint','You'],
+      ['Synonyms','Synonyms','Words that mean the same. Optional','You'],
+      ['Boilerplate','Boilerplate','Template phrases to strip out. Optional','You'],
+      ['DataLed','DataLed','The data-led taxonomy','Pasted from step 4, then tidied by you'],
+      ['FixedA','FixedA','Your first fixed taxonomy','You'],
+      ['FixedB','FixedB','Your second fixed taxonomy. Optional','You'],
+      ['Prep, Discover, Taxonomies, Classify, Measure','none','The Python cells this site gives you','You paste them'],
+      ['Validation','Validation','Your hand labels, made in step 6','You']],[0,1,2,3])}
+    <p class="small muted">Table names matter: the code looks for them. To rename an Excel table, click inside it and change the name on the Table Design tab.</p>
+  </div>
+
+  <h3>The route</h3>
+  <div class="steps-flow">
+    <div><b>2</b><span><strong>Your data.</strong> Column names, scope, months and redress bands.</span></div>
+    <div><b>3</b><span><strong>Prepare.</strong> Filter, band and clean the text.</span></div>
+    <div><b>4</b><span><strong>Data-led.</strong> Cluster the complaints, then save the result as the DataLed table.</span></div>
+    <div><b>5</b><span><strong>Fixed.</strong> Fill FixedA and FixedB in the set format.</span></div>
+    <div><b>6</b><span><strong>Classify.</strong> Label every complaint three ways and check the labels.</span></div>
+    <div><b>7</b><span><strong>Measure.</strong> Volume, mean, median and mode by subtheme, band and month.</span></div>
+  </div>
+  <h3>Before you touch the data</h3>
+  <div class="panel">
+    ${chk('gov1','Python in Excel runs in Microsoft&rsquo;s cloud. I have checked that is acceptable for complaint data.')}
+    ${chk('gov2','I have checked what may be pasted into Copilot chat, and I will strip names, addresses and account numbers first.')}
+    ${chk('gov3','I am working on a copy of the file, not the master.')}
+  </div>
+  <div class="panel">
+    <strong>How to paste a Python cell</strong>
+    <ol class="tight small">
+      <li>Click the cell address shown on the code (for example Prep!A1).</li>
+      <li>Type <code>=PY(</code> and press Tab. The cell switches to Python mode.</li>
+      <li>Press Copy on the code here, paste it into the cell, then press Ctrl+Enter.</li>
+      <li>To see a table, set the cell&rsquo;s output to <em>Excel values</em> (the little menu on the cell). The DataFrame is still there for later cells.</li>
+      <li>Python cells run left to right along a row, then down, sheet by sheet. If numbers do not update after you edit a table, press F9.</li>
+    </ol>
+  </div>
+  <p class="small muted">Nothing you type here leaves this page. It only builds code text from your answers, and remembers them in this browser.</p>
+  <div class="row"><button class="btn" data-go="1">Start with your data</button><button class="btn ghost" data-act="example">Fill in settings for the example workbook</button><button class="btn ghost" data-act="reset">Clear everything</button></div>`;
+}
+
+/* ---------- Your data ---------- */
+function renderData(){
+  const tfs=cfg.textFields.map((f,i)=>`
+    <div class="item">
+      <div class="grid two">
+        ${inp('Column name',`textFields.${i}.col`,{ph:'e.g. Complaint Summary'})}
+        <label class="f">What it holds<select data-bind="textFields.${i}.role">${['Customer wording','Firm response','Root cause or handler notes','Other'].map(r=>`<option ${f.role===r?'selected':''}>${r}</option>`).join('')}</select></label>
+      </div>
+      <label class="chk"><input type="checkbox" data-bind="textFields.${i}.disc" ${f.disc?'checked':''}><span>Use for data-led discovery (clusters)</span></label>
+      <label class="chk"><input type="checkbox" data-bind="textFields.${i}.cls" ${f.cls?'checked':''}><span>Use for classification (the keyword rules)</span></label>
+      <div class="ctl">${cfg.textFields.length>1?`<button class="btn ghost tiny" data-act="delTf" data-i="${i}">Remove</button>`:''}</div>
+    </div>`).join('');
+  const bands=cfg.bands.map((b,i)=>`
+    <div class="bandrow">
+      <label class="f lab">${i===0?'Band label':''}<input type="text" data-bind="bands.${i}.label" value="${esc(b.label)}" placeholder="e.g. Band ${i+1}"></label>
+      <label class="f">${i===0?'From (£)':''}<input type="text" inputmode="decimal" data-bind="bands.${i}.lo" value="${esc(b.lo)}" placeholder="0"></label>
+      <label class="f">${i===0?'Up to (£)':''}<input type="text" inputmode="decimal" data-bind="bands.${i}.hi" value="${esc(b.hi)}" placeholder="blank = no limit"></label>
+      <button class="btn ghost tiny" data-act="delBand" data-i="${i}" aria-label="Remove band ${i+1}">Remove</button>
+    </div>`).join('');
+  return `
+  <h2>Your data</h2>
+  <p>Type the names exactly as they appear in your Complaints table. Leave anything you do not have blank. Or use the example settings to see how it works.</p>
+  <div class="row"><button class="btn ghost tiny" data-act="example">Fill in settings for the example workbook</button></div>
+  <h3>Your complaints table</h3>
+  <div class="grid three">${inp('Excel table name','table',{ph:'Complaints'})}</div>
+  <h3>Key columns</h3>
+  <div class="grid three">
+    ${inp('Complaint ID','idCol',{ph:'Complaint ID'})}
+    ${inp('Date to analyse by','dateCol',{ph:'Date Received'})}
+    ${inp('Redress amount','redressCol',{ph:'Redress Amount'})}
+  </div>
+  <h3>Scope</h3>
+  <div class="grid two">
+    <div>${inp('Workstream column','wsCol',{ph:'Product'})}<label class="f" style="margin-top:8px">Workstream value(s)<span class="hint">One per line</span><textarea data-bind="wsVals" spellcheck="false">${esc(cfg.wsVals)}</textarea></label></div>
+    <div>${inp('Complaint theme column','themeCol',{ph:'Complaint Theme'})}<label class="f" style="margin-top:8px">Theme value(s)<span class="hint">One per line</span><textarea data-bind="themeVals" spellcheck="false">${esc(cfg.themeVals)}</textarea></label></div>
+  </div>
+  <label class="chk"><input type="checkbox" data-bind="redressPositive" ${cfg.redressPositive?'checked':''}><span>Only complaints where redress was paid (amount above zero)</span></label>
+  <h3>Free-text fields</h3>
+  <p class="small muted">Add as many as your system has. Classify on the customer&rsquo;s own words to start. Add the firm&rsquo;s response only if it states the root cause, otherwise its boilerplate will blur the subthemes.</p>
+  ${tfs}
+  <button class="btn ghost tiny" data-act="addTf">Add another text field</button>
+  <h3>Months</h3>
+  <div class="grid two">
+    <div>
+      <label class="chk"><input type="radio" name="wm" data-bind="windowMode" value="latest" ${cfg.windowMode==='latest'?'checked':''}><span>The latest months in the data</span></label>
+      <label class="chk"><input type="radio" name="wm" data-bind="windowMode" value="fixed" ${cfg.windowMode==='fixed'?'checked':''}><span>Starting from a month I choose</span></label>
+    </div>
+    <div class="grid two">
+      ${inp('Number of months','months',{ph:'6'})}
+      ${cfg.windowMode==='fixed'?`<label class="f">First month<input type="month" data-bind="startMonth" value="${esc(cfg.startMonth)}"></label>`:''}
+    </div>
+  </div>
+  <p class="small muted">Dates are read day first (UK style) if they are stored as text.</p>
+  <h3>Redress bands</h3>
+  <p class="small muted">Use your pre-established bands. &ldquo;From&rdquo; is included, &ldquo;Up to&rdquo; is not, so the next band should start where the last one stops. Leave the last &ldquo;Up to&rdquo; blank for no limit.</p>
+  ${bands}
+  <button class="btn ghost tiny" data-act="addBand">Add a band</button>
+  <h3>Measures</h3>
+  <div class="grid two">
+    ${inp('Smallest group to report','minN',{ph:'10',hint:'Smaller groups are blanked'})}
+    ${inp('Round to nearest £ for the mode','modeStep',{ph:'5',hint:'Exact pennies never repeat'})}
+  </div>
+  <details><summary>Advanced (you can ignore these)</summary>
+    ${inp('Extra words to ignore in discovery','extraStop',{ph:'complaint, customer, account',hint:'Single words, comma separated. &ldquo;not&rdquo;, &ldquo;no&rdquo; and &ldquo;never&rdquo; are kept on purpose.'})}
+    <label class="f" style="margin-top:8px">Lemmatising<select data-bind="lemma"><option value="auto" ${cfg.lemma!=='dict'?'selected':''}>Try WordNet, fall back if it is not available</option><option value="dict" ${cfg.lemma==='dict'?'selected':''}>Always use the built-in rules</option></select>
+    <span class="hint">Python in Excel has no internet, so WordNet data often will not load. The fallback is fine.</span></label>
+  </details>`;
+}
+
+/* ---------- code steps ---------- */
+const INTRO={
+  prep:{h:'Prepare',p:'Load the complaints, keep only the ones in scope, and clean the text. Nothing here needs your taxonomies yet.',
+    do:['In your workbook, make sure there is a sheet called <strong>Prep</strong>.','Paste each cell below into the address shown (see &ldquo;How to paste a Python cell&rdquo; on the Start page). Run them in order.','Set each cell&rsquo;s output to <strong>Excel values</strong>.'],
+    done:'the row funnel ends at a number you can explain, the Unbanded row is empty, and the cleaned text looks sensible beside the original.',
+    read:['<strong>Row funnel:</strong> a big drop at &ldquo;Redress readable&rdquo; usually means amounts stored as text with odd symbols. Fix the source, not the code.','<strong>Unbanded</strong> should be empty. If not, there is a gap between two of your bands.','<strong>Cleaning:</strong> it removes emails, long reference numbers and anything that is not a letter, then your Boilerplate phrases, then swaps words for the ones in your Synonyms table so counts are not split across spellings.']},
+  dl:{h:'Data-led taxonomy',p:'Let your complaints tell you what the subthemes are. You cluster them, read examples from each cluster, then save the result as the DataLed table in Excel.',
+    do:['Make a sheet called <strong>Discover</strong>. Paste the first cells (words, phrases, collocations) to get a feel for the wording. They are optional but worth it.','Paste <strong>How many clusters?</strong> and run it once. It is slow. Pick a number where stability is high and no cluster is tiny or huge. Type that number in the settings at the bottom of this page, then copy <strong>Fit the clusters</strong> again.','Run the fit, summary and examples cells. <strong>Read the examples for every cluster</strong> and decide what to call each one.','Run <strong>Draft the data-led taxonomy</strong>. Select its whole output, copy it, go to the <strong>DataLed</strong> sheet, click the first cell under the headings, and paste as values. If the table does not grow, drag the small handle at its bottom-right corner.','In DataLed, rename each &ldquo;Cluster n (name me)&rdquo; in the Subtheme column, delete clusters you do not want, and tidy the Keywords.'],
+    done:'the DataLed table has one row per subtheme you want, every row has a real name, and no keyword is a word that appears in most complaints.',
+    read:['<strong>Common phrases:</strong> share is the proportion of complaints containing it. Phrases in 3% to 30% of complaints are the useful ones.','<strong>Band lift:</strong> a lift of 3 means the phrase appears in three times as many complaints in that band as overall. High-lift phrases in the top band are your expensive patterns.','<strong>How many clusters:</strong> stability near 1 means the same clusters appear on a second run. Avoid a count with a tiny or dominant cluster.','<strong>Typical complaints:</strong> never name a cluster from its top words alone. If a cluster mixes two issues, use more clusters. If two read the same, use fewer.','<strong>The draft:</strong> keywords are the words most specific to each cluster, with endings wildcarded. The Notes column shows phrases to read, which are not keywords. Turn any good phrase into a keyword yourself.','<strong>Only expensive complaints?</strong> Set ONLY_BAND at the top of the clusters cell to one of your band labels.']},
+  classify:{h:'Classify',p:'Label every complaint under all three taxonomies, then improve the one you are working on until Other is small. Finally check the labels against complaints you label by hand.',
+    do:['Make a sheet called <strong>Classify</strong> and paste the cells in order.','Run <strong>Label every complaint</strong>. Read the headline table: how much is left in Other for each taxonomy?','Pick the taxonomy you are working on (below). Read what is left in its Other bucket, then add keywords <strong>in its Excel table</strong>. Everything recalculates when you edit the table.','Repeat until Other is under about 10%, or what is left is genuinely miscellaneous.','Draw the hand-label sample, paste it into a new sheet as a table called <strong>Validation</strong>, fill the human_label column blind, then run the agreement cell.'],
+    done:'Other is small in the taxonomy you are working on, no subtheme looks too broad, and each subtheme agrees with your hand labels at about 80% or better.',
+    read:['<strong>How labels are applied:</strong> Theme comes straight from your data. For each taxonomy, the first row (top to bottom) whose keywords match sets the label. A row with a Theme filled in only applies to that theme.','<strong>Headline:</strong> the last row shows complaints that none of the three taxonomies catches. Those are your best source of new keywords.','<strong>Zero-hit keywords</strong> are dead weight. Remove them or fix the spelling.','<strong>How two taxonomies line up:</strong> a data-led subtheme that lands almost entirely in one fixed subtheme is a duplicate. Merge its keywords into the fixed row.','<strong>Validation:</strong> label around 15 per subtheme before looking at the rules&rsquo; answer.','<strong>Copilot in Excel</strong> can label a few hundred rows, but it is slow and hard to audit at 25,000. Use it to check your rules, not replace them.']},
+  measure:{h:'Measure',p:'For each subtheme by month, redress band or both: volume, mean, median and mode, plus a trimmed mean and the 75th and 90th percentiles. Every table can be cut by any of the three taxonomies.',
+    do:['Make a sheet called <strong>Measure</strong> and paste the cells in order.','Choose which taxonomy to measure by (below). To switch, change it, copy <strong>Set up the measures</strong> again, and everything below recalculates.','<strong>All three side by side</strong> compares the same complaints under each taxonomy in one table.'],
+    done:'you can explain every volume in terms of the row funnel, and blank cells are groups below your minimum.',
+    read:['<strong>Median</strong> is the headline for skewed redress. Mean above median means a few big payments pull it up.','<strong>Mode</strong> is found after rounding to your chosen £ step. <strong>mode_share</strong> is the proportion paid that exact amount. Above roughly 20% usually means a standard goodwill payment, which is a finding in itself.','<strong>Trimmed mean</strong> drops the top and bottom 10% of payments.','<strong>Blank cells</strong> mean the group is below your minimum. Combine subthemes or months rather than reporting small numbers.']}
+};
+const COPILOT={
+  dl:()=>`I am building a taxonomy of complaint subthemes from clusters. Below are clusters from an analysis of ${ph(lines(cfg.wsVals).join(' / '),'[product]')} complaints where redress was paid. For each cluster I have its top words and three typical complaints (anonymised, with names, addresses and account numbers removed).
+
+For each cluster, give me:
+1. A short subtheme name and a one-line definition.
+2. Whether it looks like two issues mixed together, and if so how to split it.
+3. 5 to 10 keywords or phrases in the customers' own wording that would identify it.
+
+[paste the cluster terms and typical complaints here]`,
+  classify:()=>`Here are my subthemes and their keywords for one taxonomy:
+
+[paste the taxonomy table here]
+
+Below are 30 anonymised complaints that my rules put in "Other / unclassified". For each one, say which existing subtheme it belongs in, or propose a new subtheme. Then list the keywords or phrases I should add to each subtheme so these would be caught next time.
+
+[paste 30 anonymised complaints here]`
+};
+function codeStep(key){
+  const I=INTRO[key];
+  const settings = key==='dl' ? `<details open><summary>Settings for these cells</summary><div class="grid three">
+      ${inp('Number of clusters','k',{ph:'10'})}${inp('Longest phrase (words)','ngramMax',{ph:'3'})}${inp('Ignore phrases in fewer than … complaints','minDf',{ph:'5'})}
+      ${inp('Vocabulary cap','maxFeat',{ph:'20000'})}${inp('Rows shown per phrase length','topN',{ph:'25'})}</div>
+      <p class="small muted">After changing a setting, copy the affected cell here again and paste it over the old one.</p></details>`
+    : key==='classify' ? `<details open><summary>Settings for these cells</summary>${focusSelect()}<div class="grid three" style="margin-top:8px">${inp('Complaints to label per subtheme','valPer',{ph:'15'})}</div></details>`
+    : key==='measure' ? `<details open><summary>Settings for these cells</summary>${focusSelect()}</details>` : '';
+  const cp=COPILOT[key]?`<h3>Ask Copilot for a second opinion</h3><p class="small muted">Use anonymised samples only, and only if your firm allows complaint text in Copilot chat.</p>
+    <div class="cell"><div class="cell-head"><span class="cell-title">Copilot chat prompt</span><button class="btn ghost tiny" data-copy="cp.${key}">Copy</button></div><pre class="code" data-cp="${key}" style="white-space:pre-wrap"></pre></div>`:'';
+  return `<h2>${I.h}</h2><p class="lead">${I.p}</p>
+  ${doit(I.do,I.done)}
+  ${missBanner()}
+  ${cellsBlock(key)}${settings}${cp}
+  ${key==='dl'?`<div class="note">When the DataLed table is ready, move on to fix your own two taxonomies. <button class="btn tiny" data-go="4">Go to Fixed</button></div>`:''}
+  <details><summary>How to read the results</summary><ul class="tight">${I.read.map(r=>`<li>${r}</li>`).join('')}</ul></details>`;
+}
+
+/* ---------- Fixed ---------- */
+function renderFixed(){
+  const head=EXT.cols;
+  return `<h2>Fixed taxonomies</h2>
+  <p class="lead">These are two sets of categories that you write yourself. They live in Excel, on the sheets <strong>FixedA</strong> and <strong>FixedB</strong>, in exactly the format below. The data-led one from step 4 uses the same format.</p>
+  ${doit(['Open the <strong>FixedA</strong> sheet. Fill the table in the format below, one row per subtheme.','Do the same on <strong>FixedB</strong> if you have a second set, for example reference categories. If you do not, leave the example rows out and it is simply not used.','If you want, fill <strong>Synonyms</strong> and <strong>Boilerplate</strong> (formats below). They are optional.','Make a sheet called <strong>Taxonomies</strong>, paste the cell at the bottom of this page and run it.','Read the report. Fix anything in the problems column, then check it again.'],'every table you use shows found &ldquo;yes&rdquo; and problems &ldquo;none&rdquo;.')}
+  <h3>The format</h3>
+  <p>Every taxonomy table has exactly these five columns, with this exact header row. Do not rename the headers.</p>
+  ${tbl(['Column','Required','What to put','Example'],[
+    ['Theme','No','An exact value from your theme column. The row then only applies to complaints with that theme. Blank means every theme.','Fees and charges'],
+    ['Reference category','No','The wider category this subtheme rolls up to.','Charges'],
+    ['Subtheme','Yes','A short name for what went wrong.','Charge not explained'],
+    ['Keywords','Yes','Words or phrases separated by commas, in the customer’s own wording. Add * for any ending. Plurals and -ed/-ing forms are automatic.','not told, no warning, unexpected charge'],
+    ['Notes','No','Anything you like. The code ignores this column.','']],[0,1,2,3])}
+  <h3>What it looks like: FixedA</h3>
+  <p class="small muted">This is what the FixedA sheet contains in the example workbook. The Notes column explains each row.</p>
+  ${tbl(head,EXT.fixedA,[0,1,2,3,4])}
+  <h3>What it looks like: FixedB</h3>
+  <p class="small muted">A second, broader set. Same columns. It gets its own label on every complaint.</p>
+  ${tbl(head,EXT.fixedB,[0,1,2,3,4])}
+  <h3>Rules that make it work</h3>
+  <ul class="tight">
+    <li><strong>Order matters within a table.</strong> Rows are checked top to bottom. The first row whose keywords match sets that taxonomy&rsquo;s label. Put specific subthemes above general ones.</li>
+    <li><strong>Each taxonomy labels every complaint on its own.</strong> A complaint gets one label from DataLed, one from FixedA and one from FixedB, plus the Theme it already had.</li>
+    <li><strong>Use the customer&rsquo;s wording.</strong> Write &ldquo;not told&rdquo;, not &ldquo;lack of disclosure&rdquo;. Aim for 5 to 15 keywords per row.</li>
+    <li><strong>Avoid words that appear in almost every complaint.</strong> One of them will claim everything.</li>
+    <li>Keywords are matched against the cleaned text, so use the words you keep in Synonyms (for example <em>charge</em>, not <em>fee</em>).</li>
+  </ul>
+  <h3>How a complaint gets labelled</h3>
+  ${tbl(['Complaint','Theme','data_led','fixed_a','fixed_b'],[
+    ['“Not told about the monthly fee”','Fees and charges','(no match)','Charge not explained','Charges and fees'],
+    ['“Letter never arrived, chased twice”','Service','Letters and paperwork','Delay to refund','Contact and communication'],
+    ['“App kept crashing”','Service','(no match)','(no match)','Everyday service']],[0,1,2,3,4])}
+  <p class="small muted">Different taxonomies can disagree. That is the point: you can measure the same complaints under each and compare.</p>
+  <h3>The two optional cleaning tables</h3>
+  <div class="grid two">
+    <div><strong>Synonyms</strong><p class="small muted">Columns <em>Keep</em> and <em>Same as</em>. Every word in Same as is replaced by the Keep word in the complaint text and in your keywords.</p>
+      ${tbl(['Keep','Same as'],EXT.synonyms,[0,1])}</div>
+    <div><strong>Boilerplate</strong><p class="small muted">One column called <em>Phrase</em>. Each phrase is deleted from the complaint text.</p>
+      ${tbl(['Phrase'],EXT.boiler,[0])}</div>
+  </div>
+  <h3>Check your tables</h3>
+  ${missBanner()}
+  ${cellsBlock('fixed')}
+  <details><summary>How to read the report</summary><ul class="tight">
+    <li><strong>found NO</strong> means Excel has no table with that name. Check the sheet and the Table Design name. It is fine for DataLed and FixedB if you are not using them.</li>
+    <li><strong>subthemes</strong> counts the rows that were read. If it is lower than you expect, look at the problems column.</li>
+    <li><strong>problems</strong> lists row numbers counting the header as row 1.</li></ul></details>`;
+}
+
+function allPy(){
+  const parts=[]; ['prep','dl','fixed','classify','measure'].forEach(k=>{ CELLS[k].filter(c=>!c.show||c.show()).forEach((c,i)=>{ parts.push(`# ${'='.repeat(70)}\n# ${SHEET[k]}!${colLetter(i*13)}1  |  ${c.title}\n# ${'='.repeat(70)}\n${c.py()}`); }); });
+  return parts.join('\n\n');
+}
+function renderFinish(){
+  const m=missing();
+  return `<h2>Finish</h2>
+  <p class="lead">A checklist for sanity-checking the numbers before anyone sees them, and everything in one place.</p>
+  <div class="panel"><strong>Your setup</strong>
+    <ul class="tight small"><li>${esc(ph(cfg.table,'(table not set)'))}: ${esc(ph(cfg.idCol,'?'))}, ${esc(ph(cfg.dateCol,'?'))}, ${esc(ph(cfg.redressCol,'?'))}</li>
+    <li>${tf().length} text field${tf().length>1?'s':''}, ${bandList().length} redress band${bandList().length>1?'s':''}, ${int(cfg.months,6)} months, minimum group ${int(cfg.minN,10)}, working on ${esc(FOCUS_NAMES[focus()])}</li></ul>
+    ${m.length?`<p class="small">Still blank: ${esc(m.join(', '))}. <button class="btn ghost tiny" data-go="1">Fill in</button></p>`:'<p class="small ok">All key settings are filled in.</p>'}</div>
+  <h3>Sanity checks before you share</h3>
+  <ul class="tight">
+    <li>Volumes in the month view add up to the last line of the row funnel.</li>
+    <li>Other / unclassified is under about 10% in the taxonomy you report on, or you can say why it is not.</li>
+    <li>Each subtheme agrees with your hand labels at about 80% or better, and you know which pairs get confused.</li>
+    <li>You have reported medians alongside means, and said which groups were blanked for being too small.</li>
+    <li>A mode share above 20% has been explained (standard payment, cap, or tariff).</li>
+    <li>You have written down the version and date of each taxonomy table, so next month uses the same rules.</li>
+  </ul>
+  <h3>Everything in one script</h3>
+  <p class="small muted">Handy for review. In Excel, keep the Python as separate cells so heavy steps do not rerun every time you edit.</p>
+  <details><summary>All Python cells in order</summary><div class="cell"><div class="cell-head"><span class="cell-title">All Python cells</span><button class="btn ghost tiny" data-copy="all.py">Copy</button></div><pre class="code" data-all="py" tabindex="0"></pre></div></details>
+  <h3>Keep or move your settings</h3>
+  <p class="small muted">Settings stay in this browser. To use them on another machine, copy them here and paste them there.</p>
+  <div class="row"><button class="btn ghost" data-copy="cfg">Copy my settings</button><button class="btn ghost" data-act="loadCfg">Load pasted settings</button></div>
+  <textarea id="cfgbox" placeholder="Paste settings here, then choose Load pasted settings" spellcheck="false"></textarea>
+  <div class="row"><button class="btn ghost" data-act="example">Fill in settings for the example workbook</button><button class="btn ghost" data-act="reset">Clear everything</button></div>`;
+}
+
+/* ---------- events ---------- */
+function onEdit(e){
+  const t=e.target, p=t.dataset&&t.dataset.bind; if(!p) return;
+  if(t.type==='radio'){ if(!t.checked) return; setP(p,t.value); save(); if(p==='windowMode'){render();return;} refresh(); return; }
+  setP(p,t.type==='checkbox'?t.checked:t.value); save(); refresh();
+}
+document.addEventListener('input',onEdit); document.addEventListener('change',onEdit);
+function selectNode(n){ try{ const r=document.createRange(); r.selectNodeContents(n); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){} }
+async function copyText(text,btn,node){
+  let ok=false;
+  try{ await navigator.clipboard.writeText(text); ok=true; }catch(e){
+    try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){}
+  }
+  const old=btn.textContent; btn.textContent=ok?'Copied':'Select and copy'; if(!ok&&node) selectNode(node);
+  setTimeout(()=>{btn.textContent=old;},1600);
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.go!=null){ step=+t.dataset.go; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.copy){
+    const k=t.dataset.copy; let node,text;
+    if(k==='cfg'){ text=JSON.stringify(cfg); }
+    else if(k.startsWith('cp.')){ node=$(`pre[data-cp="${k.slice(3)}"]`); text=node.textContent; }
+    else if(k.startsWith('all.')){ node=$(`pre[data-all]`); text=node.textContent; }
+    else { node=$(`pre[data-cell="${k}"]`); text=node.textContent; }
+    copyText(text,t,node); return;
+  }
+  const a=t.dataset.act; if(!a) return; const i=+t.dataset.i;
+  if(a==='addTf') cfg.textFields.push({col:'',role:'Other',disc:true,cls:false});
+  else if(a==='delTf') cfg.textFields.splice(i,1);
+  else if(a==='addBand') cfg.bands.push({label:'',lo:'',hi:''});
+  else if(a==='delBand') cfg.bands.splice(i,1);
+  else if(a==='example'){ cfg=EXAMPLE(); }
+  else if(a==='reset'){
+    if(!t.dataset.armed){ const old=t.textContent; t.dataset.armed='1'; t.textContent='Click again to clear everything'; setTimeout(()=>{ delete t.dataset.armed; t.textContent=old; },3000); return; }
+    cfg=DEF();
+  }
+  else if(a==='loadCfg'){
+    try{ cfg=Object.assign(DEF(),JSON.parse($('#cfgbox').value)); }
+    catch(_){ const old=t.textContent; t.textContent='Those are not valid settings'; setTimeout(()=>{ t.textContent=old; },2500); return; }
+  }
+  render();
+});
+load(); render();
+
+</script>
+</body>
+</html>
